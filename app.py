@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 
 app = Flask(__name__)
+app.secret_key = "super_secret_key_change_later"
 
 DB_PATH = "database/users.db"
 
@@ -53,6 +55,15 @@ def get_user(id):
     return user
 
 
+def get_user_by_email(email):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+    conn.close()
+    return user
+
+
 def get_users():
     conn = get_db()
     cursor = conn.cursor()
@@ -84,37 +95,78 @@ def delete_user(id):
 
 
 # =======================
-# USER ROUTES
+# AUTH DECORATOR
 # =======================
 
-@app.route("/users_page")
-def users_page():
-    users = get_users()
-    return render_template("users.html", users=users)
+def login_required(route_func):
+    @wraps(route_func)
+    def wrapper(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return route_func(*args, **kwargs)
+    return wrapper
 
 
-@app.route("/user_page/<int:id>")
-def user_page(id):
-    user = get_user(id)
-    return render_template("user.html", user=user)
+# =======================
+# AUTH ROUTES
+# =======================
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = get_user_by_email(email)
+
+        if user and check_password_hash(user["password"], password):
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
+            return redirect(url_for("profile_route", id=user["id"]))
+
+        return render_template("login.html", error="Invalid email or password")
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+        add_user(username, email, password)
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
+
+# =======================
+# PROTECTED USER ROUTES
+# =======================
 
 @app.route("/profile/<int:id>")
+@login_required
 def profile_route(id):
     user = get_user(id)
     return render_template("profile.html", user=user)
 
 
-@app.route("/add_user", methods=["POST"])
-def add_user_route():
-    username = request.form["username"]
-    email = request.form["email"]
-    password = request.form["password"]
-    add_user(username, email, password)
-    return redirect(url_for("index"))
+@app.route("/users_page")
+@login_required
+def users_page():
+    users = get_users()
+    return render_template("users.html", users=users)
 
 
 @app.route("/update_user/<int:id>", methods=["GET", "POST"])
+@login_required
 def update_user_route(id):
     if request.method == "POST":
         username = request.form["username"]
@@ -128,13 +180,14 @@ def update_user_route(id):
 
 
 @app.route("/delete_user/<int:id>", methods=["POST"])
+@login_required
 def delete_user_route(id):
     delete_user(id)
-    return redirect(url_for("index"))
+    return redirect(url_for("users_page"))
 
 
 # =======================
-# GENERAL PAGES
+# GENERAL ROUTES
 # =======================
 
 @app.route("/")
@@ -142,22 +195,14 @@ def index():
     return render_template("home.html")
 
 
-@app.route("/login")
-def login():
-    return render_template("login.html")
-
-
-@app.route("/register")
-def register():
-    return render_template("register.html")
-
-
 @app.route("/upload")
+@login_required
 def upload():
     return render_template("upload.html")
 
 
 @app.route("/results")
+@login_required
 def results():
     return render_template("results.html")
 
