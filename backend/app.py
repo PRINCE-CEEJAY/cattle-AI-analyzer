@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "super_secret_key_change_later"
+app.secret_key = "1234567890" #will be changed later
 
 DB_PATH = "database/users.db"
 
