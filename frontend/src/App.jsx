@@ -6,6 +6,7 @@ import History from "./components/History"
 import Upload from "./components/Upload"
 import Results from "./components/Results"
 import Dashboard from "./components/Dashboard"
+import Logout from "./components/Logout"
 
 
 export default function App(){
@@ -14,6 +15,7 @@ export default function App(){
         <Route path="/" element= {<Home/>} />
         <Route path="/auth/registration" element= {<Registration/>} />
         <Route path="/auth/login" element= {<Login/>} />
+        <Route path="/auth/logout" element= {<Logout/>} />
         <Route path="/upload" element= {<Upload/>} />
         <Route path="/dashboard" element= {<Dashboard/>} />       
         <Route path="/results" element= {<Results/>} />

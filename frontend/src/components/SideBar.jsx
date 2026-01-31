@@ -1,68 +1,78 @@
-import { Contact, HomeIcon, LayoutDashboardIcon, LogInIcon, Moon, NotebookPenIcon, Plus, BookOpenText, SeparatorVertical, Sun, LogOut, CircleUserRound, Menu } from "lucide-react"
-import { Link } from "react-router-dom";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, UserPlus, LogIn, LayoutDashboard, BookOpenText, LogOutIcon } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
-export default function SideBar() {
-    const [visible, setVisible] = useState(true)
+export default function Sidebar() {
+  const [open, setOpen] = useState(true);
+  const location = useLocation();
 
-    const toggleSidebar = () => setVisible(prev=>!prev)
-
-  const nav = [
-    {
-    id: 1,
-    link: '/',
-    icon: <HomeIcon/>,
-    text: 'Home'
-  },
-    {
-    id: 2,
-    link: '/dashboard',
-    icon: <LayoutDashboardIcon/>,
-    text: 'Dashboard'
-  },
-    {
-    id: 3,
-    link: '/upload',
-    icon: <Plus/>,
-    text: 'Upload Video'
-  },
-    {
-    id: 4,
-    link: '/results',
-    icon: <BookOpenText/>,
-    text: 'Analysis Results'
-  },
-    {
-    id: 5,
-    link: '/history',
-    icon: <Contact/>,
-    text: 'History'
-  },
-]
+  const links = [
+    { name: "Dashboard", to: "/history", icon: LayoutDashboard },
+    { name: "Results", to: "/results", icon: BookOpenText },
+    { name: "Register", to: "/auth/registration", icon: UserPlus },
+    { name: "Login", to: "/auth/login", icon: LogIn },
+    { name: "Logout", to: "/auth/logout", icon: LogOutIcon },
+  ];
 
   return (
-    <div className="flex flex-col w-fit">  
-        <div className="w-full text-right bg-transparent">
-            <button className="font-extrabold cursor-pointer opacity-85 text-red-500  hover:opacity-100" onClick={toggleSidebar}> 
-                <Menu/> 
-            </button>      
-        </div>     
-        {
-            visible && 
-            <div className="flex flex-col lg:font-extrabold justify-evenly px-2 h-full  sidebar">
-                {nav.map(({id, link, icon, text})=>( 
-                    <div className="flex gap-1" key={id}>  
-                    {icon}
-                    <Link to= {link} className="">{text}</Link>
-                    </div>
-                    ))}
-                <div className="flex gap-1 items-center">
-                    <CircleUserRound/>
-                    <button className="bg-orange-700 px-2 py-1 rounded-full hover:bg-orange-500 cursor-pointer">Logout</button>
-                </div>
+    <>
+      {/* Toggle Button */}
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="fixed top-4 left-4 z-50 p-2 rounded-xl bg-slate-900 text-white shadow-lg hover:scale-105 transition"
+      >
+        {open ? <X size={22} /> : <Menu size={22} />}
+      </button>
 
+      {/* Sidebar */}
+      <AnimatePresence>
+        {open && (
+          <motion.aside
+            initial={{ x: -260, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -260, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed top-0 left-0 h-screen w-64 bg-slate-900 border-r border-slate-800 shadow-2xl p-6 flex flex-col"
+          >
+            {/* Header */}
+            <div className="mb-10 mx-auto">             
+              <p className=" text-slate-400 text-md font-bold mt-1">Menu</p>
             </div>
-        }
-    </div>
-  )
+
+            {/* Links */}
+            <nav className="flex flex-col gap-2">
+              {links.map((item) => {
+                const Icon = item.icon;
+                const active = location.pathname === item.to;
+
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition group
+                      ${
+                        active
+                          ? "bg-indigo-600 text-white shadow-lg"
+                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      }`}
+                  >
+                    <Icon size={18} />
+                    <span className="font-medium">{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Footer */}
+            <div className="mt-auto pt-6 border-t border-slate-800">
+              <div className="text-xs text-slate-500">
+                © {new Date().getFullYear()} Ceejay Dev
+              </div>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
