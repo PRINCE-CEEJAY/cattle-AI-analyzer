@@ -25,6 +25,9 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            firstname TEXT NOT NULL,
+            middlename TEXT,
+            lastname TEXT NOT NULL,
             username TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL
@@ -34,13 +37,13 @@ def init_db():
     conn.close()
 
 
-def add_user(username, email, password):
+def add_user(username, firstname, middlename, lastname, email, password):
     conn = get_db()
     cursor = conn.cursor()
     hashed_password = generate_password_hash(password)
     cursor.execute(
-        "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-        (username, email, hashed_password)
+        "INSERT INTO users (username, firstname, middlename, lastname, email, password) VALUES (?, ?, ?, ?, ?, ?)",
+        (username, firstname, middlename, lastname, email, hashed_password)
     )
     conn.commit()
     conn.close()
@@ -73,15 +76,15 @@ def get_users():
     return users
 
 
-def update_user(id, username, email, password):
+def update_user(id, username, firstname, middlename, lastname, email, password):
     conn = get_db()
     cursor = conn.cursor()
     hashed_password = generate_password_hash(password)
     cursor.execute("""
         UPDATE users
-        SET username = ?, email = ?, password = ?
+        SET username = ?, firstname = ?, middlename = ?, lastname = ?, email = ?, password = ?
         WHERE id = ?
-    """, (username, email, hashed_password, id))
+    """, (username, firstname, middlename, lastname, email, hashed_password, id))
     conn.commit()
     conn.close()
 
